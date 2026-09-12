@@ -140,3 +140,68 @@ Built from a full study session covering encapsulation, subnetting, switching/VL
 ---
 
 *Compiled from a self-paced study session — subnetting method, troubleshooting discipline, and protocol fundamentals aligned to L1/L2 support, NOC, and ISP network support interviews.*
+
+---
+
+## Module 9: PPPoE
+
+**Q: What problem does PPPoE solve that plain DHCP doesn't?**
+> DHCP just hands out an IP to anyone who asks — it doesn't check who you are. PPPoE wraps a username and password login into the connection process, so the ISP can actually authenticate the customer — confirm they have an active, paid account — before granting internet access.
+
+**Q: What does PPPoE actually stand for, and how does it work?**
+> Point-to-Point Protocol over Ethernet. It takes PPP, which was originally built for dial-up and has authentication built in, and runs it over Ethernet instead. There's a discovery stage where your router finds the ISP's server — the BRAS — and sets up a session, then a session stage where it sends your username and password. Once that's authenticated, the ISP assigns your router a public IP and the connection comes up. Everything else — NAT, DHCP for your home devices — runs on top of that authenticated connection.
+
+**Q: A customer's fiber signal is confirmed good at the ONT, but they still have no internet. What does this point to?**
+> Since the optical/physical layer is confirmed fine, this isn't a fiber or hardware problem — it points to a PPPoE authentication or session issue. Something's failing at the login/authentication stage before IP even gets assigned, not at the physical connection.
+
+**Q: What actually fails in the PPPoE process if a customer's account is suspended for non-payment?**
+> The authentication step itself fails — the ISP's server checks the credentials against the subscriber database, and if the account's suspended, it rejects the login even if the username and password are technically correct.
+
+---
+
+## Module 10: GPON, ONT, and OLT
+
+**Q: What is GPON, and why is it called "passive"?**
+> GPON is Gigabit Passive Optical Network — it delivers internet using light signals over fiber instead of electrical signals over copper. It's called passive because the distribution part of the network — the splitters that divide the signal between the OLT and each home — have no power source at all, they just physically split light. The OLT and ONT themselves are powered, active equipment; it's specifically the stuff in between that's passive, which is what keeps the network cheap to run at scale.
+
+**Q: What are the OLT, splitter, and ONT, and how does a signal flow through them?**
+> The OLT sits at the ISP's facility and sends the light signal out — it's the brain of the system, and one OLT can serve many customers. The signal travels down fiber to a splitter, which is a passive device that divides that one signal to serve multiple homes. From there it goes to the ONT at the customer's home, which converts the optical signal back into an Ethernet signal the router can use.
+
+**Q: A power meter reads -32 dBm at a customer's ONT — good or bad?**
+> That's bad. The acceptable range for GPON is roughly -8 dBm to -27 dBm, and -32 is more negative than the floor, meaning the signal's too weak. That usually points to something like a sharp bend in the fiber, a dirty or damaged connector, or too much distance/too many splitters between the OLT and the customer.
+
+**Q: What's an OTDR used for, versus a power meter?**
+> A power meter just tells you the signal strength at one point. An OTDR sends a light pulse down the fiber and reads the reflections back, which lets you pinpoint the exact location of a break, bend, or bad splice — you'd reach for it when a power meter tells you something's wrong but not where.
+
+---
+
+## Module 11: Ping vs Traceroute, and Basic Wireshark
+
+**Q: What's the difference between ping and traceroute?**
+> Ping only tells you if a destination is reachable and how long the round trip took — it doesn't show anything about the path. Traceroute shows you every hop along the way and the latency at each one, so if something's failing, you can see exactly where in the path it breaks down, not just that it broke somewhere.
+
+**Q: How does traceroute actually work?**
+> It uses the TTL field in the IP header. It sends a packet with TTL=1, which dies at the first router, and that router sends back a "TTL exceeded" message — that's how you learn about hop one. Then it sends TTL=2, which dies at the second hop, and so on, building the full path one hop at a time.
+
+**Q: Ping to a website fails completely, but traceroute shows 5 successful hops before failing at hop 6. What does this tell you?**
+> It tells you the problem isn't local to the customer — the first 5 hops are working fine, so the issue is further upstream, likely in the ISP's network or beyond. That's useful because it tells you where to focus, rather than spending time re-checking the customer's own setup.
+
+**Q: What's Wireshark used for at a basic level, and when would you reach for it?**
+> Wireshark captures actual traffic on a network interface so you can see individual packets — source, destination, protocol, contents. You can filter by protocol, like typing "dns" to see only DNS traffic or "dhcp" to confirm a device is actually sending a DHCP Discover. It's usually a verification tool you reach for after ping or traceroute has already pointed you toward something specific you want to confirm in detail, not a first step.
+
+---
+
+## Module 12: Escalation Criteria (L1 → L2/L3)
+
+**The core criteria for escalating:**
+1. It's outside your access or permissions (e.g., OLT-side provisioning, core network config)
+2. You've exhausted your defined troubleshooting steps and still haven't found or fixed the root cause
+3. It needs specialized tools or access you don't have
+4. You're at risk of breaching SLA and need to hand off in time
+5. It falls outside your scope of work or safety boundaries
+
+**Q: You've confirmed good optical signal, the ONT is online, and PPPoE keeps failing for one customer even with correct credentials. Do you escalate, and how?**
+> Before jumping to escalation, I'd have the customer check if there's an outstanding bill, or check with my team lead on the account status — a lot of PPPoE failures with correct credentials actually trace back to a suspended account, not a technical issue. If the account comes back active and it's still failing, then I'd escalate, since at that point it's likely a backend authentication or provisioning issue outside what I can fix at my level.
+
+**Q: Why document what you've already ruled out before escalating?**
+> So the next tier doesn't waste time re-checking what I've already confirmed — they can start from where I left off instead of repeating my steps from scratch. It makes the handoff actually useful instead of just passing along an unsolved problem.
